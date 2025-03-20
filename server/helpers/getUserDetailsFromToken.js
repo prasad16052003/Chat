@@ -1,20 +1,25 @@
-const jwt = require('jsonwebtoken')
-const UserModel = require('../models/UserModel')
+const jwt = require('jsonwebtoken');
+const UserModel = require('../models/UserModel');
 
-const getUserDetailsFromToken = async(token)=>{
-    
-    if(!token){
+const getUserDetailsFromToken = async (token) => {
+    if (!token) {
         return {
-            message : "session out",
-            logout : true,
-        }
+            message: "Session expired",
+            logout: true,
+        };
     }
 
-    const decode = await jwt.verify(token,process.env.JWT_SECREAT_KEY)
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY); // ✅ Fixed typo here
+        const user = await UserModel.findById(decoded.id).select('-password');
 
-    const user = await UserModel.findById(decode.id).select('-password')
+        return user;
+    } catch (error) {
+        return {
+            message: "Invalid or expired token",
+            logout: true,
+        };
+    }
+};
 
-    return user
-}
-
-module.exports = getUserDetailsFromToken
+module.exports = getUserDetailsFromToken;
